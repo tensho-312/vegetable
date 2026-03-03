@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GrowLog | 野菜の生育管理</title>
+    <style>
+        :root {
+            --primary-color: #4caf50;
+            --secondary-color: #8bc34a;
+            --bg-color: #f1f8e9;
+            --card-bg: #ffffff;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 { color: var(--primary-color); }
+
+        /* 入力フォーム */
+        .form-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover { background-color: var(--secondary-color); }
+
+        /* 植物カードリスト */
+        .plant-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .plant-card {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 5px solid var(--primary-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        .plant-info h3 { margin: 0; color: var(--primary-color); }
+        .plant-info p { margin: 5px 0; font-size: 0.9em; }
+
+        .delete-btn {
+            background: #ff5252;
+            width: auto;
+            padding: 5px 10px;
+            font-size: 0.8em;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>🌿 GrowLog</h1>
+        <p>マイガーデンの成長記録</p>
+    </header>
+
+    <div class="form-card">
+        <input type="text" id="plantName" placeholder="野菜の名前（例：トマト）">
+        <input type="date" id="plantDate">
+        <select id="waterCycle">
+            <option value="1">毎日水やり</option>
+            <option value="2">2日に1回水やり</option>
+            <option value="3">3日に1回水やり</option>
+            <option value="7">週に1回水やり</option>
+        </select>
+        <button onclick="addPlant()">登録する</button>
+    </div>
+
+    <div id="plantList" class="plant-list">
+        </div>
+</div>
+
+<script>
+    // データの読み込み
+    let plants = JSON.parse(localStorage.getItem('myPlants')) || [];
+
+    function saveAndRender() {
+        localStorage.setItem('myPlants', JSON.stringify(plants));
+        renderPlants();
+    }
+
+    function addPlant() {
+        const name = document.getElementById('plantName').value;
+        const date = document.getElementById('plantDate').value;
+        const cycle = document.getElementById('waterCycle').value;
+
+        if (!name || !date) return alert("名前と日付を入力してください");
+
+        const plant = {
+            id: Date.now(),
+            name,
+            date,
+            cycle
+        };
+
+        plants.push(plant);
+        saveAndRender();
+        
+        // フォームのリセット
+        document.getElementById('plantName').value = '';
+    }
+
+    function deletePlant(id) {
+        plants = plants.filter(p => p.id !== id);
+        saveAndRender();
+    }
+
+    function renderPlants() {
+        const list = document.getElementById('plantList');
+        list.innerHTML = '';
+
+        plants.forEach(plant => {
+            const startDate = new Date(plant.date);
+            const today = new Date();
+            const diffDays = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+
+            const card = document.createElement('div');
+            card.className = 'plant-card';
+            card.innerHTML = `
+                <div class="plant-info">
+                    <h3>${plant.name}</h3>
+                    <p>📅 種まき/植付: ${plant.date}</p>
+                    <p>🌱 経過日数: <strong>${diffDays >= 0 ? diffDays : 0}日目</strong></p>
+                    <p>💧 水やり周期: ${plant.cycle}日ごと</p>
+                </div>
+                <button class="delete-btn" onclick="deletePlant(${plant.id})">削除</button>
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    // 初期化
+    document.getElementById('plantDate').valueAsDate = new Date();
+    renderPlants();
+</script>
+
+</body>
+</html>
